@@ -21,7 +21,7 @@
 
     <arg name="confidence_width"    default="-1"/>
     <arg name="confidence_height"   default="-1"/>
-    <arg name="enable_confidence"   default="true"/>
+    <arg name="enable_confidence"   default="false"/>
     <arg name="confidence_fps"      default="-1"/>
 
     <arg name="infra_width"         default="848"/>
@@ -51,7 +51,7 @@
     <arg name="ordered_pc"                default="false"/>
 
     <arg name="enable_sync"               default="false"/>
-    <arg name="align_depth"               default="false"/>
+    <arg name="align_depth"               default="true"/>
 
     <arg name="publish_tf"                default="true"/>
     <arg name="tf_publish_rate"           default="0"/>

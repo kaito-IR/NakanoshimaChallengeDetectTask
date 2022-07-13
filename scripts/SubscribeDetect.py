@@ -3,16 +3,18 @@
 import cv2
 import numpy as np
 import rospy
+import sys
+import os
 from std_msgs.msg import String
 from darknet_ros_msgs.msg import BoundingBoxes 
 from sensor_msgs.msg import Image,CompressedImage  
-from cv_bridge import CvBridge
+from cv_bridge import CvBridge #cvBridgeはpython3では使えないっぽい
 
 class YOROS(object):
     def __init__(self):
         self.YOLOSub = rospy.Subscriber('/darknet_ros/bounding_boxes',BoundingBoxes, self.Callback)
         self.ImageSub = rospy.Subscriber("/camera/color/image_raw/compressed", CompressedImage, self.process_image)
-        self.DepthSub = rospy.Subscriber("/camera/depth/image_rect_raw/compressed", CompressedImage, self.process_depth_image)
+        self.DepthSub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.process_depth_image)
         self.pub = rospy.Publisher('/FindPerson', String, queue_size=1)
         self.cvbridge = CvBridge()
         
@@ -24,8 +26,12 @@ class YOROS(object):
             print(err)
     def process_depth_image(self, msg):
         try:
-            #self.img = self.cvbridge.imgmsg_to_cv2(msg, "bgr8")
-            self.depthimg = self.cvbridge.compressed_imgmsg_to_cv2(msg,msg.encoding)
+            self.depthimg = self.cvbridge.imgmsg_to_cv2(msg, msg.encoding)
+            #self.depthimg = self.cvbridge.compressed_imgmsg_to_cv2(msg, msg.encoding)
+            #pix = (msg.width/2, msg.height/2)
+            #sys.stdout.write('Depth at center(%d, %d): %f(mm)\r' % (pix[0], pix[1], self.depthimg[pix[1], pix[0]]))
+            #sys.stdout.flush()
+            #self.pub.publish(str(self.depthimg[pix[1], pix[0]]))
         except Exception as err:
             print(err)
 
@@ -52,7 +58,7 @@ class YOROS(object):
             CenterList = []
             if blob_count > 0:
                 for i in range(1, nLabels):
-                    if stats[i][4] >= 500:
+                    if stats[i][4] >= 400:
                         iList.append(i)
                 for i in iList:
                     CenterPos = (int(center[i][0]),int(center[i][1]))
@@ -62,18 +68,12 @@ class YOROS(object):
                     if bboxs[i].Class == 'person' and bboxs[i].probability >= 0.40:
                         for pos in CenterList:
                             if pos[0] >= bboxs[i].xmin and pos[0] <= bboxs[i].xmax and pos[1] >= bboxs[i].ymin and pos[1] <= bboxs[i].ymax:
-                                
-                                indices = np.array(np.where(self.depthimg == self.depthimg[self.depthimg > 0].min()))[:,0]
-                                pix = (indices[1], indices[0])
-                                #self.RosFindPersonPublish(pos)
-                                self.RosFindPersonPublish(self.depthimg[pix[1], pix[0]])
+                                self.pub.publish(str(self.depthimg[pos[1],pos[0]]))
             #cv2.imshow("",self.img)
             cv2.imshow("mask",mask)
             #self.depthimg = cv2.cvtColor(self.depthimg,cv2.COLOR_BGR2RGB)hoge
             #cv2.imshow("depth",self.depthimg)
             cv2.waitKey(1)
-    def RosFindPersonPublish(self,msg):
-        self.pub.publish(str(msg))
 def main():
     rospy.init_node('YOLO')
     yoros = YOROS()
