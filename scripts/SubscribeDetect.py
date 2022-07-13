@@ -27,7 +27,6 @@ class YOROS(object):
     def process_depth_image(self, msg):
         try:
             self.depthimg = self.cvbridge.imgmsg_to_cv2(msg, msg.encoding)
-            #self.depthimg = self.cvbridge.compressed_imgmsg_to_cv2(msg, msg.encoding)
             #pix = (msg.width/2, msg.height/2)
             #sys.stdout.write('Depth at center(%d, %d): %f(mm)\r' % (pix[0], pix[1], self.depthimg[pix[1], pix[0]]))
             #sys.stdout.flush()
@@ -71,8 +70,6 @@ class YOROS(object):
                                 self.pub.publish(str(self.depthimg[pos[1],pos[0]]))
             #cv2.imshow("",self.img)
             cv2.imshow("mask",mask)
-            #self.depthimg = cv2.cvtColor(self.depthimg,cv2.COLOR_BGR2RGB)hoge
-            #cv2.imshow("depth",self.depthimg)
             cv2.waitKey(1)
 def main():
     rospy.init_node('YOLO')
