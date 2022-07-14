@@ -24,8 +24,8 @@
     <arg name="enable_confidence"   default="false"/>
     <arg name="confidence_fps"      default="-1"/>
 
-    <arg name="infra_width"         default="848"/>
-    <arg name="infra_height"        default="480"/>
+    <arg name="infra_width"         default="-1"/>
+    <arg name="infra_height"        default="-1"/>
     <arg name="enable_infra"        default="false"/>
     <arg name="enable_infra1"       default="false"/>
     <arg name="enable_infra2"       default="false"/>
@@ -36,9 +36,9 @@
     <arg name="enable_color"        default="true"/>
 
     <arg name="fisheye_fps"         default="-1"/>
-    <arg name="depth_fps"           default="-1"/>
-    <arg name="infra_fps"           default="30"/>
-    <arg name="color_fps"           default="-1"/>
+    <arg name="depth_fps"           default="30"/>
+    <arg name="infra_fps"           default="-1"/>
+    <arg name="color_fps"           default="30"/>
     <arg name="gyro_fps"            default="-1"/>
     <arg name="accel_fps"           default="-1"/>
     <arg name="enable_gyro"         default="false"/>
@@ -50,7 +50,7 @@
     <arg name="allow_no_texture_points"   default="false"/>
     <arg name="ordered_pc"                default="false"/>
 
-    <arg name="enable_sync"               default="false"/>
+    <arg name="enable_sync"               default="true"/>
     <arg name="align_depth"               default="true"/>
 
     <arg name="publish_tf"                default="true"/>
@@ -150,7 +150,7 @@
     </group>
     <!-- Console launch prefix -->
     <arg name="launch_prefix" default=""/>
-    <arg name="image" default="/camera/rgb/image_raw" />
+    <arg name="image" default="/camera/color/image_raw" />
 
     <!-- Config and weights folder. -->
     <arg name="yolo_weights_path"          default="$(find darknet_ros)/yolo_network_config/weights"/>
@@ -168,7 +168,7 @@
     <node pkg="darknet_ros" type="darknet_ros" name="darknet_ros" output="screen" launch-prefix="$(arg launch_prefix)">
         <param name="weights_path"          value="$(arg yolo_weights_path)" />
         <param name="config_path"           value="$(arg yolo_config_path)" />
-        <remap from="camera/rgb/image_raw"  to="$(arg image)" />
+        <remap from="camera/color/image_raw"  to="$(arg image)" />
     </node>
     <node pkg="yoros" name="YOROS" type="SubscribeDetect.py" />
 </launch>

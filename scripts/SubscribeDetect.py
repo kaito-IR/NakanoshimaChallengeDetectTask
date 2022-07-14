@@ -4,8 +4,7 @@ import cv2
 import numpy as np
 import rospy
 import sys
-import os
-from std_msgs.msg import String
+from std_msgs.msg import Int16
 from darknet_ros_msgs.msg import BoundingBoxes 
 from sensor_msgs.msg import Image,CompressedImage  
 from cv_bridge import CvBridge #cvBridgeはpython3では使えないっぽい
@@ -15,8 +14,9 @@ class YOROS(object):
         self.YOLOSub = rospy.Subscriber('/darknet_ros/bounding_boxes',BoundingBoxes, self.Callback)
         self.ImageSub = rospy.Subscriber("/camera/color/image_raw/compressed", CompressedImage, self.process_image)
         self.DepthSub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.process_depth_image)
-        self.pub = rospy.Publisher('/FindPerson', String, queue_size=1)
+        self.pub = rospy.Publisher('/PersonDist', Int16, queue_size=1)
         self.cvbridge = CvBridge()
+        self.DistOld = 0
         
     def process_image(self, msg):
         try:
@@ -64,11 +64,23 @@ class YOROS(object):
                     CenterList.append(CenterPos)
                     cv2.circle(self.img,CenterPos,2,(0,0,255),5)
                 for i, bb in enumerate(bboxs):
+                    flag = False
                     if bboxs[i].Class == 'person' and bboxs[i].probability >= 0.40:
                         for pos in CenterList:
                             if pos[0] >= bboxs[i].xmin and pos[0] <= bboxs[i].xmax and pos[1] >= bboxs[i].ymin and pos[1] <= bboxs[i].ymax:
-                                self.pub.publish(str(self.depthimg[pos[1],pos[0]]))
-            #cv2.imshow("",self.img)
+                                dist = int(self.depthimg[pos[1],pos[0]])
+                                if dist > 0 and (self.DistOld == 0 or abs(self.DistOld - dist) <= 200):
+                                    self.DistOld = dist
+                                    self.pub.publish(dist)#単位：mm
+                                    flag = True
+                                    break
+                                elif dist > 0:
+                                    self.DistOld = dist
+                        if flag:
+                            break
+            else:
+                self.DistOld = 0
+            #cv2.imshow("camera",self.img)
             cv2.imshow("mask",mask)
             cv2.waitKey(1)
 def main():
