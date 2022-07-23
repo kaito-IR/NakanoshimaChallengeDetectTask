@@ -14,9 +14,10 @@ class YOROS(object):
         self.YOLOSub = rospy.Subscriber('/darknet_ros/bounding_boxes',BoundingBoxes, self.Callback)
         self.ImageSub = rospy.Subscriber("/camera/color/image_raw/compressed", CompressedImage, self.process_image)
         self.DepthSub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.process_depth_image)
-        self.pub = rospy.Publisher('/PersonDist', Int16, queue_size=1)
+        self.StaffDistPub = rospy.Publisher('/StaffDist', Int16, queue_size=1)
+        self.PersonDistPub = rospy.Publisher('/PersonDist', Int16, queue_size=1)
         self.cvbridge = CvBridge()
-        self.DistOld = 0
+        self.StaffDistOld = 0
         
     def process_image(self, msg):
         try:
@@ -30,7 +31,7 @@ class YOROS(object):
             #pix = (msg.width/2, msg.height/2)
             #sys.stdout.write('Depth at center(%d, %d): %f(mm)\r' % (pix[0], pix[1], self.depthimg[pix[1], pix[0]]))
             #sys.stdout.flush()
-            #self.pub.publish(str(self.depthimg[pix[1], pix[0]]))
+            #self.StaffDistPub.publish(str(self.depthimg[pix[1], pix[0]]))
         except Exception as err:
             print(err)
 
@@ -38,14 +39,14 @@ class YOROS(object):
         bboxs = msg.bounding_boxes
         if len(bboxs) > 0:
             hsv = cv2.cvtColor(self.img, cv2.COLOR_BGR2HSV) #BGRをHSV色空間に変換
-            #orange_min = np.array([8,200,200]) #多分この辺の範囲のはず．要現地で調整．
-            #orange_max = np.array([20,255,255])
-            #blue_min = np.array([110,220,130])
-            #blue_max = np.array([120,255,255])
-            orange_min = np.array([60,200,90]) #テスト用の範囲．本番は上の範囲でやる
-            orange_max = np.array([100,255,160])
-            blue_min = np.array([80,190,120])
-            blue_max = np.array([120,250,220])
+            orange_min = np.array([5,220,200]) #多分この辺の範囲のはず．要現地で調整．
+            orange_max = np.array([20,255,255])
+            blue_min = np.array([100,220,80])
+            blue_max = np.array([115,255,255])
+            #orange_min = np.array([60,200,90]) #テスト用の範囲．本番は上の範囲でやる
+            #orange_max = np.array([100,255,160])
+            #blue_min = np.array([80,190,120])
+            #blue_max = np.array([120,250,220])
             mask1 = cv2.inRange(hsv, blue_min, blue_max) #hsvの各ドットについてblue_minからblue_maxの範囲内ならtrue
             mask2 = cv2.inRange(hsv,orange_min,orange_max)
             mask = cv2.bitwise_or(mask1,mask2)
@@ -57,29 +58,49 @@ class YOROS(object):
             CenterList = []
             if blob_count > 0:
                 for i in range(1, nLabels):
-                    if stats[i][4] >= 400:
+                    if stats[i][4] >= 300:
                         iList.append(i)
-                for i in iList:
-                    CenterPos = (int(center[i][0]),int(center[i][1]))
-                    CenterList.append(CenterPos)
-                    cv2.circle(self.img,CenterPos,2,(0,0,255),5)
+                if len(iList) != 0:
+                    for i in iList:
+                        CenterPos = (int(center[i][0]),int(center[i][1]))
+                        CenterList.append(CenterPos)
+                        cv2.circle(self.img,CenterPos,2,(0,0,255),5)
+                    for i, bb in enumerate(bboxs):
+                        flag = False
+                        if bboxs[i].Class == 'person' and bboxs[i].probability >= 0.40:
+                            for pos in CenterList:
+                                if pos[0] >= bboxs[i].xmin and pos[0] <= bboxs[i].xmax and pos[1] >= bboxs[i].ymin and pos[1] <= bboxs[i].ymax:
+                                    dist = int(self.depthimg[pos[1],pos[0]])
+                                    if dist > 0 and (self.StaffDistOld == 0 or abs(self.StaffDistOld - dist) <= 200):
+                                        self.StaffDistOld = dist
+                                        self.StaffDistPub.publish(dist)#単位：mm
+                                        flag = True
+                                        break
+                                    elif dist > 0:
+                                        self.StaffDistOld = dist
+                            if flag:
+                                break
+                else:
+                    self.StaffDistOld = 0
+                    for i, bb in enumerate(bboxs):
+                        flag = False
+                        if bboxs[i].Class == 'person' and bboxs[i].probability >= 0.40:
+                            pos = (int((bboxs[i].xmax+bboxs[i].xmin)/2),int((bboxs[i].ymax+bboxs[i].ymin)/2))
+                            dist = int(self.depthimg[pos[1],pos[0]])
+                            if dist > 0:
+                                self.PersonDistPub.publish(dist)
+                                break
+            else:
+                self.StaffDistOld = 0
                 for i, bb in enumerate(bboxs):
                     flag = False
                     if bboxs[i].Class == 'person' and bboxs[i].probability >= 0.40:
-                        for pos in CenterList:
-                            if pos[0] >= bboxs[i].xmin and pos[0] <= bboxs[i].xmax and pos[1] >= bboxs[i].ymin and pos[1] <= bboxs[i].ymax:
-                                dist = int(self.depthimg[pos[1],pos[0]])
-                                if dist > 0 and (self.DistOld == 0 or abs(self.DistOld - dist) <= 200):
-                                    self.DistOld = dist
-                                    self.pub.publish(dist)#単位：mm
-                                    flag = True
-                                    break
-                                elif dist > 0:
-                                    self.DistOld = dist
-                        if flag:
+                        pos = (int((bboxs[i].xmax+bboxs[i].xmin)/2),int((bboxs[i].ymax+bboxs[i].ymin)/2))
+                        dist = int(self.depthimg[pos[1],pos[0]])
+                        if dist > 0:
+                            self.PersonDistPub.publish(dist)
                             break
-            else:
-                self.DistOld = 0
+                
             #cv2.imshow("camera",self.img)
             cv2.imshow("mask",mask)
             cv2.waitKey(1)

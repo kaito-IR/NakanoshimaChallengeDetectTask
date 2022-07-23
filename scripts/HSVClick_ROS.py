@@ -11,11 +11,11 @@ class HSVClick(object):
     def __init__(self):
         self.ImageSub = rospy.Subscriber("/camera/color/image_raw", Image, self.process_image)
         self.cvbridge = CvBridge()
-        self.upper = np.array([180, 255, 255])
-        self.lower = np.array([170, 80, 80])
+        self.upper = np.array([120, 255, 255])
+        self.lower = np.array([100, 200, 90])
 
-        self.u1 = np.array([10, 255, 255])
-        self.l1 = np.array([0, 100, 100])
+        self.u1 = np.array([120, 255, 255])
+        self.l1 = np.array([100, 200, 90])
 
         self.num = 10
         # ウィンドウのサイズを変更可能にする
@@ -58,6 +58,11 @@ class HSVClick(object):
             mask1 = cv2.inRange(self.hsv, self.l1, self.u1)
 
             mask = mask + mask1
+            cnts,ret = cv2.findContours(mask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+            if len(cnts) != 0:
+                cnts = max(cnts,key=lambda x: cv2.contourArea(x))
+                x,y,w,h = cv2.boundingRect(cnts)
+                print("Square = ",w*h)
 
             cv2.imshow("img", img)
             cv2.imshow("mask", mask)
