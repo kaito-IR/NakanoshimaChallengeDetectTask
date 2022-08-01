@@ -12,7 +12,7 @@ catkinワークスペースのsrc内にdarknet_rosパッケージ及びrealsense
 catkinワークスペースのsrc内にgitコマンドを使ってyorosパッケージを導入します．
 
 	https://github.com/kaito-IR/NakanoshimaChallengeDetectTask.git
-導入したらcatkin_makeを実行を実行してください．  
+導入したらcatkin_makeを実行してください．  
 catkin_makeが終わったら
 
 	source "catkinワークスペースのパス"/devel/setup.bash
