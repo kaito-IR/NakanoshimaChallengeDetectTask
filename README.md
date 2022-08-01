@@ -1,4 +1,4 @@
-## これはrealsense2_cameraパッケージとdarknet_rosパッケージを用いて，Realsenseで撮った映像上から人間を検知し，検知した人間との距離をROSTopic上に流すパッケージです．
+## これはrealsense2_cameraパッケージとdarknet_rosパッケージを用いて，Realsenseで撮った映像上から人間を検知し，検知した人間との距離をROSTopic上に流すパッケージです．  
 # 使用環境  
 端末：Jetson Xavier NX  
 カメラ：Realsense D435i  
@@ -11,7 +11,7 @@ catkinワークスペースのsrc内にdarknet_rosパッケージ及びrealsense
 ### Step2.
 catkinワークスペースのsrc内にgitコマンドを使ってyorosパッケージを導入します．
 
-	https://github.com/kaito-IR/NakanoshimaPersonDetect.git
+	https://github.com/kaito-IR/YOLOPersonDetectRealsense.git
 導入したらcatkin_makeを実行を実行してください．  
 catkin_makeが終わったら
 
@@ -42,3 +42,5 @@ HSVCLick_ROSの実行に成功すると，Realsenseのカメラ映像と，マ�
 ## 注意点
 当然ですが，HSVClick_ROS.pyは対象のHSVの値を**大まかに**絞るためのプログラムです．このプログラムで取得できたHSVの値がそのまま利用できるとは限りません．  
 そのため，SubscribeDetect.pyの閾値変数の値を書き換える場合は，ある程度の余裕を持たせてください．細かな値の調整は自力でお願いします．
+# 後書き
+このROSパッケージは本来中之島チャレンジでの通行人の自動検知及びスタッフの認識タスクの達成のために作ったパッケージですが，SubscribeDetect.pyの中身を書き換えれば様々な応用を利かせることができると思います．
