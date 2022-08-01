@@ -67,11 +67,12 @@ class YOROS(object):
                         cv2.circle(self.img,CenterPos,2,(0,0,255),5)
                     for i, bb in enumerate(bboxs):
                         flag = False
-                        if bboxs[i].Class == 'person' and bboxs[i].probability >= 0.40:
+                        if bboxs[i].Class == 'person' and bboxs[i].probability >= 0.35:
                             for pos in CenterList:
                                 if pos[0] >= bboxs[i].xmin and pos[0] <= bboxs[i].xmax and pos[1] >= bboxs[i].ymin and pos[1] <= bboxs[i].ymax:
                                     dist = int(self.depthimg[pos[1],pos[0]])
-                                    if dist > 0 and (self.StaffDistOld == 0 or abs(self.StaffDistOld - dist) <= 200):
+                                    #if dist > 0 and (self.StaffDistOld == 0 or abs(self.StaffDistOld - dist) <= 200):
+                                    if dist > 0:
                                         self.StaffDistOld = dist
                                         self.StaffDistPub.publish(dist)#単位：mm
                                         flag = True
@@ -84,7 +85,7 @@ class YOROS(object):
                     self.StaffDistOld = 0
                     for i, bb in enumerate(bboxs):
                         flag = False
-                        if bboxs[i].Class == 'person' and bboxs[i].probability >= 0.40:
+                        if bboxs[i].Class == 'person' and bboxs[i].probability >= 0.35:
                             pos = (int((bboxs[i].xmax+bboxs[i].xmin)/2),int((bboxs[i].ymax+bboxs[i].ymin)/2))
                             dist = int(self.depthimg[pos[1],pos[0]])
                             if dist > 0:
@@ -94,7 +95,7 @@ class YOROS(object):
                 self.StaffDistOld = 0
                 for i, bb in enumerate(bboxs):
                     flag = False
-                    if bboxs[i].Class == 'person' and bboxs[i].probability >= 0.40:
+                    if bboxs[i].Class == 'person' and bboxs[i].probability >= 0.35:
                         pos = (int((bboxs[i].xmax+bboxs[i].xmin)/2),int((bboxs[i].ymax+bboxs[i].ymin)/2))
                         dist = int(self.depthimg[pos[1],pos[0]])
                         if dist > 0:
