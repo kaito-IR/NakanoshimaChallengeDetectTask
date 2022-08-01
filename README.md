@@ -11,7 +11,7 @@ catkinワークスペースのsrc内にdarknet_rosパッケージ及びrealsense
 ### Step2.
 catkinワークスペースのsrc内にgitコマンドを使ってyorosパッケージを導入します．
 
-	https://github.com/kaito-IR/YOLOPersonDetectRealsense.git
+	https://github.com/kaito-IR/NakanoshimaChallengeDetectTask.git
 導入したらcatkin_makeを実行を実行してください．  
 catkin_makeが終わったら
 
